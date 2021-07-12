@@ -1,0 +1,29 @@
+.components .title {
+    margin-bottom: 0;
+}
+
+table, tr, tbody, td {
+    border-collapse: collapse;
+}
+
+.components .subtitle {
+    margin: 0;
+}
+
+.components .image {
+    height: 100px;
+}
+
+.component_bottom td {
+    text-align: left;
+    padding-bottom: 5px;
+    border-bottom: 1px solid black;
+}
+
+.highlight {
+    background-color: #e3fbe3;
+}
+
+input[type=checkbox] {
+    transform: scale(1.5);
+}
