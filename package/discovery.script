@@ -1,13 +1,23 @@
 from Ansys.Discovery.Api.V20 import MaterialAssignment
-part = GetRootPart()
 simulation = Physics.Simulation.GetCurrentSimulation()
+rootPart = GetRootPart()
+components = rootPart.GetComponents()
 
 ######################################################################
 ##### Setup: Make Sure Simulation is Static and Define Functions #####
 ######################################################################
-#simulation.SimulationOptions.CalculationType = CalculationType.Static
-#simulation.SimulationOptions.StructuralModelOption = StructuralModelOption.Linear
 
+# Set up simulation options
+simulation.SimulationOptions.CalculationType = CalculationType.Static
+simulation.SimulationOptions.StructuralModelOption = StructuralModelOption.Linear
+
+
+# Unsuppress everything
+for comp in components:
+    for body in comp.GetAllBodies():
+        simulation.SuppressBody(body, False)
+        
+# Material Assignment Function
 def reassignMaterial(name, oldName, matDensity, youngs, poisson, yieldStrength, uts):
     material = Physics.Material.GetMaterial(oldName)
     material.Label = name
@@ -23,10 +33,36 @@ def reassignMaterial(name, oldName, matDensity, youngs, poisson, yieldStrength, 
     material.PoissonsRatio = poissonsRatio
     material.TensileYieldStrength = tensileYieldStrength
     material.TensileUltimateYieldStrength = tensileUltimateYieldStrength
+    
+
+# Material Assignment for Bolts
+def assignBoltMaterial(compone):
+    if compone.GetName() == 'tbolt':
+        for body in compone.GetAllBodies():
+            MaterialAssignment.Create(body, Physics.Material.GetLibraryMaterial("Brass, C37700"))
+            reassignMaterial(name="A307 Grade A Bolt Steel",
+                 oldName="Brass, C37700",
+                 matDensity=7850,
+                 youngs=210*10**9,
+                 poisson=0.3,
+                 yieldStrength=318*10**6,
+                 uts=414*10**6)
+            #MaterialAssignment.Create(body, Physics.Material.GetLibraryMaterial("A307 Grade A Bolt Steel"))
+
+
+# Recursive search of component tree
+def searchComponents(compone, func):
+    for comp in compone.GetComponents():
+        if len(comp.GetAllComponents()) == 0:
+            func(comp)
+        else:
+            searchComponents(comp, func)
 
 ######################################################################
 ########################## Apply Materials ###########################
 ######################################################################
+searchComponents(rootPart, assignBoltMaterial)
+
 reassignMaterial(name="Aluminum",
                  oldName="Structural steel, S275N",
                  matDensity=2690,
@@ -35,24 +71,23 @@ reassignMaterial(name="Aluminum",
                  yieldStrength=270*10**6,
                  uts=280*10**6)
 
-#reassignMaterial(name="A307 Grade A Bolt Steel",
-#                 oldName="Structural steel, S275N",
-#                 matDensity=7850,
-#                 youngs=210*10**9,
-#                 poisson=0.3,
-#                 yieldStrength=318*10**6,
-#                 uts=414*10**6)
-
-part = GetRootPart()
-components = part.GetComponents()
-for comp in components:
-    if comp.GetName() == "Fastener_model":
-        for body in comp.GetAllBodies():
-            MaterialAssignment.Create(body, Physics.Material.GetLibraryMaterial("A307 Grade A Bolt Steel"))
+'''
+reassignMaterial(name="A307 Grade A Bolt Steel",
+                 oldName="Brass, C37700",
+                 matDensity=7850,
+                 youngs=210*10**9,
+                 poisson=0.3,
+                 yieldStrength=318*10**6,
+                 uts=414*10**6)
+'''
 
 ######################################################################
 ######################## Apply Bolt Preloads #########################
 ######################################################################
+print('Applying bolt preloads:  To do:  1) make this only affect components with a certain name,  2) make it idempotent')
+
+# This code is idempotent, but applies one preload to the group of all bolts
+'''
 try:
     print(Physics.BoltPreload.GetByLabel("Auto_Bolt_Preload"))
     print("Bolt Preload Already Exists.  Creation Skipped.")
@@ -60,6 +95,16 @@ except:
     selection = PowerSelection.Faces.ByAreaRange(MM2(211.8), MM2(212))
     preloadForce = 4593
     boltpreload = Physics.BoltPreload.Create(selection, Selection.Empty())
+    force = ForceQuantity.Create(preloadForce, ForceUnit.Newton)
+    boltpreload.ChangeClampForceMagnitude(force)
+    boltpreload.Label = "Auto_Bolt_Preload"
+'''
+
+# This code is not idempotent, but applies a separate preload to each bolt
+selection = PowerSelection.Faces.ByAreaRange(MM2(211.8), MM2(212))
+preloadForce = 4593
+for i in selection.Items:
+    boltpreload = Physics.BoltPreload.Create(Selection.Create(i), Selection.Empty())
     force = ForceQuantity.Create(preloadForce, ForceUnit.Newton)
     boltpreload.ChangeClampForceMagnitude(force)
     boltpreload.Label = "Auto_Bolt_Preload"
