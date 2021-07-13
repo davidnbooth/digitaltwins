@@ -1,0 +1,67 @@
+from Ansys.Discovery.Api.V20 import MaterialAssignment
+part = GetRootPart()
+simulation = Physics.Simulation.GetCurrentSimulation()
+
+######################################################################
+##### Setup: Make Sure Simulation is Static and Define Functions #####
+######################################################################
+#simulation.SimulationOptions.CalculationType = CalculationType.Static
+#simulation.SimulationOptions.StructuralModelOption = StructuralModelOption.Linear
+
+def reassignMaterial(name, oldName, matDensity, youngs, poisson, yieldStrength, uts):
+    material = Physics.Material.GetMaterial(oldName)
+    material.Label = name
+
+    density = DensityQuantity.Create(matDensity, DensityUnit.KilogramPerCubicMeter)
+    youngsModulus = PressureQuantity.Create(youngs, PressureUnit.Pascal)
+    poissonsRatio = RatioQuantity.Create(poisson, RatioUnit.DecimalFraction)
+    tensileYieldStrength = PressureQuantity.Create(yieldStrength, PressureUnit.Pascal)
+    tensileUltimateYieldStrength = PressureQuantity.Create(uts, PressureUnit.Pascal)
+
+    material.Density = density
+    material.YoungsModulus = youngsModulus
+    material.PoissonsRatio = poissonsRatio
+    material.TensileYieldStrength = tensileYieldStrength
+    material.TensileUltimateYieldStrength = tensileUltimateYieldStrength
+
+######################################################################
+########################## Apply Materials ###########################
+######################################################################
+reassignMaterial(name="Aluminum",
+                 oldName="Structural steel, S275N",
+                 matDensity=2690,
+                 youngs=68*10**9,
+                 poisson=0.33,
+                 yieldStrength=270*10**6,
+                 uts=280*10**6)
+
+#reassignMaterial(name="A307 Grade A Bolt Steel",
+#                 oldName="Structural steel, S275N",
+#                 matDensity=7850,
+#                 youngs=210*10**9,
+#                 poisson=0.3,
+#                 yieldStrength=318*10**6,
+#                 uts=414*10**6)
+
+part = GetRootPart()
+components = part.GetComponents()
+for comp in components:
+    if comp.GetName() == "Fastener_model":
+        for body in comp.GetAllBodies():
+            MaterialAssignment.Create(body, Physics.Material.GetLibraryMaterial("A307 Grade A Bolt Steel"))
+
+######################################################################
+######################## Apply Bolt Preloads #########################
+######################################################################
+try:
+    print(Physics.BoltPreload.GetByLabel("Auto_Bolt_Preload"))
+    print("Bolt Preload Already Exists.  Creation Skipped.")
+except:
+    selection = PowerSelection.Faces.ByAreaRange(MM2(211.8), MM2(212))
+    preloadForce = 4593
+    boltpreload = Physics.BoltPreload.Create(selection, Selection.Empty())
+    force = ForceQuantity.Create(preloadForce, ForceUnit.Newton)
+    boltpreload.ChangeClampForceMagnitude(force)
+    boltpreload.Label = "Auto_Bolt_Preload"
+
+print('Script Finished')
