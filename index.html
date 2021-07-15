@@ -8,9 +8,17 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script id="gen_components" type="text/x-handlebars-template">
             <form method="GET" action="">
-                <input type="submit" value="Download File Package">
                 <table class="infobox">
                     <tbody>
+                        <tr>
+                            <td colspan="2">
+                                <input type="submit" value="Download File Package">
+                            </td>
+                            <td>
+                                All<br>
+                                <input type="checkbox" onclick="toggle(this);">
+                            </td>
+                        </tr>
                        {{#each components}}
                             <tr>
                                 <td colspan="3">
@@ -44,12 +52,37 @@
             <h1>Aluminum Extrusion Digital Twins Page</h1>
         </header>
         <div id="content" class="components"></div>
+        <div id="extras">
+            To add:<br>
+            https://www.mcmaster.com/47065T12/<br>
+            https://www.mcmaster.com/47065T27/<br>
+            https://www.mcmaster.com/47065T702/<br>
+            https://www.mcmaster.com/47065T704/<br>
+            https://www.mcmaster.com/3136N149/<br>
+            https://www.mcmaster.com/3136N154/<br>
+            https://www.mcmaster.com/3136N152/<br>
+            https://www.mcmaster.com/3136N161/<br>
+            https://www.mcmaster.com/47065T256/<br>
+            https://www.mcmaster.com/47065T261/<br>
+            https://www.mcmaster.com/47065T679/<br>
+            https://www.mcmaster.com/47065T762/<br>
+            https://www.mcmaster.com/5537T51/<br>
+        </div>
         <script src="main.js" type="text/javascript"></script>
         <script>
             $('table input[type=checkbox]').click(function () {
                 $(this).closest('tr').toggleClass("highlight", this.checked);
                 $(this).closest('tr').prev('tr').toggleClass("highlight", this.checked);
             });
+        </script>
+        <script>
+        function toggle(source) {
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i] != source)
+                    checkboxes[i].checked = source.checked;
+            }
+        }
         </script>
     </body>
 </html>
