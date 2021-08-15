@@ -1,3 +1,4 @@
+# Python Script, API Version = V20 Beta
 from Ansys.Discovery.Api.V20 import MaterialAssignment
 simulation = Physics.Simulation.GetCurrentSimulation()
 rootPart = GetRootPart()
@@ -37,7 +38,7 @@ def reassignMaterial(name, oldName, matDensity, youngs, poisson, yieldStrength, 
 
 # Material Assignment for Bolts
 def assignBoltMaterial(compone):
-    if compone.GetName() == 'tbolt':
+    if compone.GetName() == 'buttonbolt_20mm_5537T161':
         for body in compone.GetAllBodies():
             MaterialAssignment.Create(body, Physics.Material.GetLibraryMaterial("Brass, C37700"))
             reassignMaterial(name="A307 Grade A Bolt Steel",
@@ -87,19 +88,20 @@ reassignMaterial(name="A307 Grade A Bolt Steel",
 print('Applying bolt preloads:  To do:  1) make this only affect components with a certain name,  2) make it idempotent')
 
 # This code is idempotent, but applies one preload to the group of all bolts
-'''
+
 try:
     print(Physics.BoltPreload.GetByLabel("Auto_Bolt_Preload"))
     print("Bolt Preload Already Exists.  Creation Skipped.")
 except:
-    selection = PowerSelection.Faces.ByAreaRange(MM2(211.8), MM2(212))
-    preloadForce = 4593
+    #selection = PowerSelection.Faces.ByAreaRange(MM2(211.8), MM2(212))
+    selection = PowerSelection.Faces.ByAreaRange(MM2(125.66), MM2(125.67))
+    preloadForce = 1124  # 5Nm M5 Kt=0.2 preload force https://mechanicalc.com/calculators/bolt-torque-preload/
     boltpreload = Physics.BoltPreload.Create(selection, Selection.Empty())
     force = ForceQuantity.Create(preloadForce, ForceUnit.Newton)
     boltpreload.ChangeClampForceMagnitude(force)
     boltpreload.Label = "Auto_Bolt_Preload"
-'''
 
+'''
 # This code is not idempotent, but applies a separate preload to each bolt
 selection = PowerSelection.Faces.ByAreaRange(MM2(211.8), MM2(212))
 preloadForce = 4593
@@ -108,5 +110,6 @@ for i in selection.Items:
     force = ForceQuantity.Create(preloadForce, ForceUnit.Newton)
     boltpreload.ChangeClampForceMagnitude(force)
     boltpreload.Label = "Auto_Bolt_Preload"
+'''
 
 print('Script Finished')
